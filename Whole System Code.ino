@@ -24,15 +24,6 @@
 #define motor2_2 39 //motor 2_2
 #define motor2_en 83 //motor 2_en
 
-////variables
-////OBSTACLE DETECTION
-//long duration1;
-//long duration2;
-//long duration3; 
-//int distance1; 
-//int distance2; 
-//int distance3;
-
 //MANUAL FOLLOWING
 int xPosJoy = 0;
 int yPosJoy = 0;
@@ -43,22 +34,9 @@ int mapY = 0;
 void setup()
 {
   // Turn off motors - Initial state
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, LOW);
-  digitalWrite(motor1_en, LOW);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, LOW);
-  digitalWrite(motor2_en, LOW);
-  
-//  //LED SYSTEM
-//  pinMode(LEDred, OUTPUT);
-//  pinMode(LEDgreen, OUTPUT);
-//  pinMode(LEDblue, OUTPUT);
-//  
-//  analogWrite(LEDred, LOW);
-//  analogWrite(LEDgreen, HIGH);
-//  analogWrite(LEDblue, LOW);
-//  
+  motors_off();
+  motors_speed(0);
+   
   //OBSTACLE DETECTION
   pinMode(echoPin1, INPUT); //obstacle ultrasonic echo 1
   pinMode(trigPin1, OUTPUT); //obstacle ultrasonic trigger 1
@@ -83,8 +61,7 @@ void setup()
   pinMode (joyY, INPUT); //joystick Y
   pinMode (joySw, INPUT_PULLUP); //joystick switch
   
-  //MOTOR CONTROL 
-    
+  //MOTOR CONTROL   
   pinMode(motor1_1, OUTPUT); //motor 1_1  
   pinMode(motor1_2, OUTPUT); //motor 1_2
   pinMode(motor1_en, OUTPUT); //motor1_en
@@ -92,8 +69,7 @@ void setup()
   pinMode(motor2_2, OUTPUT); //motor 2_2 
   pinMode(motor2_en, OUTPUT); //motor2_en 
 
-  analogWrite(motor1_en, 255);
-  analogWrite(motor2_en, 255);
+  motors_speed(0); //start motors at 0 speed
   
   digitalWrite(motor1_1, LOW);
   digitalWrite(motor1_2, LOW);
@@ -112,10 +88,11 @@ void loop()
 
 
     //???? NEEDS TO BE IMPLEMENTED ????
+
+
   
   //OBSTACLE DETECTION
-  
-    if (obstacle_front()) { //obstacle_front is true of there is an obstacle
+  if (obstacle_front()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
     Serial.print("WARNING: FRONT OBSTACLE DETECTED");
 
@@ -132,7 +109,6 @@ void loop()
     Serial.print("no obstacles detected");
   }
   
-  
   //AUTOMATIC FOLLOWING
   
   //MANUAL FOLLOWING
@@ -141,19 +117,22 @@ void loop()
   swStateJoy = digitalRead(joySw);
   mapX = map(xPosJoy, 0, 1023, -512, 512);
   mapY = map(yPosJoy, 0, 1023, -512, 512);
-  
-//  if(mapX > 570 || mapX < 454 || mapY > 570 || mapY < 454){
-//    analogWrite(LEDred, LOW);
-//    analogWrite(LEDgreen, LOW);
-//    analogWrite(LEDblue, HIGH);
+
+//  //check that joystick is being moved
+//  if(mapX > 350 || mapX < 350 || mapY > 350 || mapY < 350){
+//    
+//    var x_offset = map(mapX, 0, 1023, -70, 70); //??? what speeds ???
+//    var y_speed = map(mapY, 0, 1023, 110, 180); //??? what speeds ???
     
-    //insert manual drive code here
-    //create functions so that there is a hierarchy of driving systems
-//  }
+    //MAP mapX TO A VAR TO BE AN OFFSET
+    //MAP mapY TO SPEED FORWARD OR BACKWORDS
+//}
 }
 
 
-//FUNCTIONS
+
+
+//----------FUNCTIONS----------
 
 
 
@@ -259,8 +238,10 @@ void avoid_obstacle(){ //turn in place to avoid obstacle
 //MOTOR CONTROL
 
 void motor_startup() { //quick pulse to turn on motors
-  analogWrite(motor1_en, 255);
-  analogWrite(motor2_en, 255);
+  analogWrite(motor1_en, 200);
+  analogWrite(motor2_en, 200);
+
+  Serial.println("Motor startup");
   
   digitalWrite(motor1_1, LOW);
   digitalWrite(motor1_2, HIGH);
@@ -296,7 +277,7 @@ void motors_set_forwards() { //switch motor direction to forward
   digitalWrite(motor2_2, HIGH);
 }
 
-void moving_forwards_speed(int motors_speed) { //input movement speed
+void motors_speed(int motors_speed) { //input movement speed
   //prevent value from exceed 255
   if(motors_speed>255){
     motors_speed = 255;
