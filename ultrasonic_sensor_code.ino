@@ -85,11 +85,7 @@ bool obstacle_front() { //if no obstacle, return false
   
   //clear trigPins to low
   digitalWrite(trigPin1, LOW);
-  digitalWrite(trigPin2, LOW);
-  
-  //clear trigPins to low
-  digitalWrite(trigPin1, LOW);
-  digitalWrite(trigPin2, LOW);
+  digitalWrite(trigPin2, LOW);  
   delayMicroseconds(2); //delay, required as per arduino example code
   
   //set trigPins high for 10 microseconds
