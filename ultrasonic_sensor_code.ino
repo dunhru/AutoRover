@@ -1,43 +1,163 @@
-#define echoPin1 2 //echo for sensor 1
-#define trigPin1 3 //trig for sensor 1
-#define echoPin2 4 //echo for sensor 2
-#define trigPin2 5 //trig for sensor 2
-#define echoPin3 6 //echo for sensor 3
-#define trigPin3 7 //trig for sensor 3
+#define echoPin1 8 //obstacle ultrasonic echo 1
+#define trigPin1 9 //obstacle ultrasonic trigger 1
+#define echoPin2 10 //obstacle ultrasonic echo 2
+#define trigPin2 11 //obstacle ultrasonic trigger 2
+#define echoPin3 12 //obstacle ultrasonic echo 3
+#define trigPin3 13 //obstacle ultrasonic trigger 3
 
-void setup() {
-  //set all echo pins as inputs:
-  pinMode (echoPin1, INPUT); 
-  pinMode (echoPin2, INPUT);
-  pinMode (echoPin3, INPUT);
+#define echoa 4 //automatic ultrasonic echo
+#define triga 5 //automatic ultrasonic trigger
 
-  //set all trig pins as outputs:
-  pinMode (trigPin1, OUTPUT);
-  pinMode (trigPin2, OUTPUT);
-  pinMode (trigPin3, OUTPUT);
+#define IR1 2 //IR sensor 1
+#define IR2 3 //IR sensor 2
+#define LED1 4 //IR1 led
+#define LED2 5 //IR2 led
+
+#define joyX A0 //joystick X
+#define joyY A1 //joystick Y
+#define joySw 1 //joystick switch
+
+#define motor1_1 31 //motor 1_1
+#define motor1_2 33 //motor 1_2
+#define motor1_en 82 //motor 1_en
+#define motor2_1 37 //motor 2_1
+#define motor2_2 39 //motor 2_2
+#define motor2_en 83 //motor 2_en
+
+////variables
+////OBSTACLE DETECTION
+//long duration1;
+//long duration2;
+//long duration3; 
+//int distance1; 
+//int distance2; 
+//int distance3;
+
+//MANUAL FOLLOWING
+int xPosJoy = 0;
+int yPosJoy = 0;
+int swStateJoy = 0;
+int mapX = 0;
+int mapY = 0;
+
+void setup()
+{
+  // Turn off motors - Initial state
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor1_en, LOW);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, LOW);
+  digitalWrite(motor2_en, LOW);
+  
+//  //LED SYSTEM
+//  pinMode(LEDred, OUTPUT);
+//  pinMode(LEDgreen, OUTPUT);
+//  pinMode(LEDblue, OUTPUT);
+//  
+//  analogWrite(LEDred, LOW);
+//  analogWrite(LEDgreen, HIGH);
+//  analogWrite(LEDblue, LOW);
+//  
+  //OBSTACLE DETECTION
+  pinMode(echoPin1, INPUT); //obstacle ultrasonic echo 1
+  pinMode(trigPin1, OUTPUT); //obstacle ultrasonic trigger 1
+  
+  pinMode(echoPin2, INPUT); //obstacle ultrasonic echo 2
+  pinMode(trigPin2, OUTPUT); //obstacle ultrasonic trigger 2
+  
+  pinMode(echoPin3, INPUT); //obstacle ultrasonic echo 3
+  pinMode(trigPin3, OUTPUT); //obstacle ultrasonic trigger 3
+  
+  //AUTOMATIC FOLLOWING
+  pinMode(echoa, INPUT); //automatic ultrasonic echo
+  pinMode(triga, OUTPUT); //automatic ultrasonic trigger
+  
+  pinMode (IR1, INPUT); //IR sensor 1
+  pinMode (IR2, INPUT); //IR sensor 2
+  pinMode (LED1, OUTPUT); 
+  pinMode (LED2, OUTPUT);
+  
+  //MANUAL FOLLOWING
+  pinMode (joyX, INPUT); //joystick X
+  pinMode (joyY, INPUT); //joystick Y
+  pinMode (joySw, INPUT_PULLUP); //joystick switch
+  
+  //MOTOR CONTROL 
+    
+  pinMode(motor1_1, OUTPUT); //motor 1_1  
+  pinMode(motor1_2, OUTPUT); //motor 1_2
+  pinMode(motor1_en, OUTPUT); //motor1_en
+  pinMode(motor2_1, OUTPUT); //motor 2_1
+  pinMode(motor2_2, OUTPUT); //motor 2_2 
+  pinMode(motor2_en, OUTPUT); //motor2_en 
+
+  analogWrite(motor1_en, 255);
+  analogWrite(motor2_en, 255);
+  
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, LOW);
 
   Serial.begin(9600); //start serial communication at 9600 baudrate speed
-
 }
 
-void loop() {
+void loop()
+{
+  //HIERARCHY
+    //1) obstacle detection
+    //2) manual control
+    //3) automatic control
 
 
-  if (obstacle_front()) { //obstacle_front is true of there is an obstacle
+    //???? NEEDS TO BE IMPLEMENTED ????
+  
+  //OBSTACLE DETECTION
+  
+    if (obstacle_front()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
     Serial.print("WARNING: FRONT OBSTACLE DETECTED");
-  }
 
+    avoid_obstacle();
+  }
   if (obstacle_back()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
     Serial.print("WARNING: BACK OBSTACLE DETECTED");
-  }
 
+    avoid_obstacle();
+  }
   else {
     Serial.print("\n");
     Serial.print("no obstacles detected");
   }
+  
+  
+  //AUTOMATIC FOLLOWING
+  
+  //MANUAL FOLLOWING
+  xPosJoy = analogRead(joyX);
+  yPosJoy = analogRead(joyY);
+  swStateJoy = digitalRead(joySw);
+  mapX = map(xPosJoy, 0, 1023, -512, 512);
+  mapY = map(yPosJoy, 0, 1023, -512, 512);
+  
+//  if(mapX > 570 || mapX < 454 || mapY > 570 || mapY < 454){
+//    analogWrite(LEDred, LOW);
+//    analogWrite(LEDgreen, LOW);
+//    analogWrite(LEDblue, HIGH);
+    
+    //insert manual drive code here
+    //create functions so that there is a hierarchy of driving systems
+//  }
 }
+
+
+//FUNCTIONS
+
+
+
+//OBSTACLE DETECTION
 
 bool obstacle_back() { //if no obstacle, return false
   long duration3;
@@ -85,7 +205,7 @@ bool obstacle_front() { //if no obstacle, return false
   
   //clear trigPins to low
   digitalWrite(trigPin1, LOW);
-  digitalWrite(trigPin2, LOW);  
+  digitalWrite(trigPin2, LOW);
   delayMicroseconds(2); //delay, required as per arduino example code
   
   //set trigPins high for 10 microseconds
@@ -119,4 +239,176 @@ bool obstacle_front() { //if no obstacle, return false
     return true;
   }
 }
+
+void avoid_obstacle(){ //turn in place to avoid obstacle
+    motors_stop(); //stop movement
+    //turn until safe
+    int count = 0;
+    while(obstacle_back()){
+      if(count<30){
+        stationary_turn_right(30); //turn right with movement speed 30
+      }
+      else{
+        stationary_turn_left(50); //turn left with movement speed 50
+      }
+      count++; //if cannot avoid obstacle for 30 cycles in one direction, turn in other direction
+    }
+}
+
+
+//MOTOR CONTROL
+
+void motor_startup() { //quick pulse to turn on motors
+  analogWrite(motor1_en, 255);
+  analogWrite(motor2_en, 255);
   
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, HIGH);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, HIGH);
+  
+  delay(20);
+  
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, LOW);
+}
+
+void motors_stop() { //stop the motors
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, LOW);
+}
+
+void motors_set_backwards() { //switch motor direction to reverse
+  digitalWrite(motor1_1, HIGH);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor2_1, HIGH);
+  digitalWrite(motor2_2, LOW);
+}
+  
+void motors_set_forwards() { //switch motor direction to forward
+  digitalWrite(motor1_1, LOW);
+  digitalWrite(motor1_2, HIGH);
+  digitalWrite(motor2_1, LOW);
+  digitalWrite(motor2_2, HIGH);
+}
+
+void moving_forwards_speed(int motors_speed) { //input movement speed
+  //prevent value from exceed 255
+  if(motors_speed>255){
+    motors_speed = 255;
+  }
+  else if(motors_speed<0){
+    motors_speed = 0;
+  }
+  analogWrite(motor1_en, motors_speed);
+  analogWrite(motor2_en, motors_speed);
+}
+
+void moving_turn_right(int motors_speed) { //turn right while moving forward
+  //prevent value from exceed 255
+  if(motors_speed>55){
+    motors_speed = 55;
+  }
+  else if(motors_speed<0){
+    motors_speed = 0;
+  }
+  
+  int motor1_speed = 200 - motors_speed;
+  int motor2_speed = 200 + motors_speed;
+  analogWrite(motor1_en, motor1_speed);
+  analogWrite(motor2_en, motor2_speed);
+}
+
+void moving_turn_left(int motors_speed) { //turn left while moving forward
+  //prevent value from exceed 255
+  if(motors_speed>55){
+    motors_speed = 55;
+  }
+  else if(motors_speed<0){
+    motors_speed = 0;
+  }
+  
+  int motor1_speed = 200 + motors_speed;
+  int motor2_speed = 200 - motors_speed;
+  analogWrite(motor1_en, motor1_speed);
+  analogWrite(motor2_en, motor2_speed);
+}
+
+
+void stationary_turn_right(int motors_speed) { //turn right in place
+  //prevent value from exceed 255
+  if(motors_speed>255){
+    motors_speed = 255;
+  }
+  else if(motors_speed<0){
+    motors_speed = 0;
+  }
+  
+  int motor1_speed = 0 - motors_speed;
+  int motor2_speed = motors_speed;
+  analogWrite(motor1_en, motor1_speed);
+  analogWrite(motor2_en, motor2_speed);
+}
+
+void stationary_turn_left(int motors_speed) { //turn left in place
+  //prevent value from exceed 255
+  if(motors_speed>255){
+    motors_speed = 255;
+  }
+  else if(motors_speed<0){
+    motors_speed = 0;
+  }
+  
+  int motor1_speed = motors_speed;
+  int motor2_speed = 0 - motors_speed;
+  analogWrite(motor1_en, motor1_speed);
+  analogWrite(motor2_en, motor2_speed);
+}
+
+void read_IR() {
+  int statusSensor1 = digitalRead (IR1);
+  int statusSensor2 = digitalRead (IR2);
+  
+  if (statusSensor1 == 1)
+    digitalWrite(LED1, LOW); // LED LOW
+  }
+  
+  else
+  {
+    digitalWrite(LED1, HIGH); // LED High
+  }
+
+   
+  if (statusSensor2 == 1)
+    digitalWrite(LED2, LOW); // LED LOW
+  }
+  
+  else
+  {
+    digitalWrite(LED2, HIGH); // LED High
+  }
+}
+
+int read_auto_ultra() {
+
+  long duration;
+  int distance
+  
+  digitalWrite(triga, LOW);
+  delayMicroseconds(2); //delay, required as per arduino example code
+  
+  //set trigPins high for 10 microseconds
+  digitalWrite(triga, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(triga, LOW);
+
+  duration = pulseIn(echoa, HIGH);
+  distance = duration /72/2;
+
+  return distance
+}
