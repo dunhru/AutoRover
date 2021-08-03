@@ -27,8 +27,8 @@ void loop() {
   // For PWM maximum possible values are 0 to 255
   motor_startup();
   
-  analogWrite(motor1_en, 255);
-  analogWrite(motor2_en, 255);
+  analogWrite(motor1_en, 200);
+  analogWrite(motor2_en, 200);
   
   Serial.println("Full PWM, spin one direction");
 
@@ -48,40 +48,25 @@ void loop() {
   digitalWrite(motor2_2, HIGH);
   delay(2000);
 
-  Serial.println("Motors off");
- 
-  // Turn off motors
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, LOW);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, LOW);
-
-  motor_startup();
-  
-  // Turn on motors
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, HIGH);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, HIGH);
-  
-  // Accelerate from zero to maximum speed
-
-  Serial.println("Accelerate");
-  
-  for (int i = 0; i < 256; i++) {
-    analogWrite(motor1_en, i);
-    analogWrite(motor2_en, i);
-    
-    Serial.println(i);
-    
-    delay(20);
-  }
   
   // Decelerate from maximum speed to zero
 
   Serial.println("Decelerate");
   
-  for (int i = 255; i >= 0; --i) {
+  for (int i = 200; i >= 50; --i) {
+    analogWrite(motor1_en, i);
+    analogWrite(motor2_en, i);
+    
+    Serial.println(i);
+    
+    delay(20);
+  }
+
+  // Accelerate from zero to maximum speed
+
+  Serial.println("Accelerate");
+  
+  for (int i = 50; i < 200; i++) {
     analogWrite(motor1_en, i);
     analogWrite(motor2_en, i);
     
@@ -91,12 +76,14 @@ void loop() {
   }
 
   Serial.println("Motors off");
+
+  motors_stop();
   
-  // Now turn off motors
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, LOW);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, LOW);
+//  // Now turn off motors
+//  digitalWrite(motor1_1, LOW);
+//  digitalWrite(motor1_2, LOW);
+//  digitalWrite(motor2_1, LOW);
+//  digitalWrite(motor2_2, LOW);
 }
 
 
@@ -104,8 +91,8 @@ void loop() {
 //FUNCTIONS
 
 void motor_startup() { //quick pulse to turn on motors
-  analogWrite(motor1_en, 255);
-  analogWrite(motor2_en, 255);
+  analogWrite(motor1_en, 200);
+  analogWrite(motor2_en, 200);
 
   Serial.println("Full PWM, spin one direction");
   
