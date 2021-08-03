@@ -34,7 +34,7 @@ int mapY = 0;
 void setup()
 {
   // Turn off motors - Initial state
-  motors_off();
+  motors_stop();
   motors_speed(0);
    
   //OBSTACLE DETECTION
@@ -118,15 +118,21 @@ void loop()
   mapX = map(xPosJoy, 0, 1023, -512, 512);
   mapY = map(yPosJoy, 0, 1023, -512, 512);
 
-//  //check that joystick is being moved
-//  if(mapX > 350 || mapX < 350 || mapY > 350 || mapY < 350){
-//    
-//    var x_offset = map(mapX, 0, 1023, -70, 70); //??? what speeds ???
-//    var y_speed = map(mapY, 0, 1023, 110, 180); //??? what speeds ???
+  //check that joystick is being moved
+  if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
+    
+    int x_offset = map(mapX, 0, 1023, -70, 70); 
+    int y_speed = map(mapY, 0, 1023, -255, 255); 
+    
+    //set motor speeds
+    int left_speed = y_speed + x_offset;
+    int right_speed = y_speed - x_offset;
+
+    motors_speed_individual(left_speed, right_speed);
     
     //MAP mapX TO A VAR TO BE AN OFFSET
     //MAP mapY TO SPEED FORWARD OR BACKWORDS
-//}
+  }
 }
 
 
@@ -289,6 +295,24 @@ void motors_speed(int motors_speed) { //input movement speed
   analogWrite(motor2_en, motors_speed);
 }
 
+void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movement speed
+  //prevent value from exceed 255
+  if(motor1_speed>255){
+    motor1_speed = 255;
+  }
+  else if(motor1_speed<0){
+    motor1_speed = 0;
+  }
+  if(motor2_speed>255){
+    motor2_speed = 255;
+  }
+  else if(motor2_speed<0){
+    motor2_speed = 0;
+  }
+  analogWrite(motor1_en, motor1_speed);
+  analogWrite(motor2_en, motor2_speed);
+}
+
 void moving_turn_right(int motors_speed) { //turn right while moving forward
   //prevent value from exceed 255
   if(motors_speed>55){
@@ -354,7 +378,7 @@ void read_IR() {
   int statusSensor1 = digitalRead (IR1);
   int statusSensor2 = digitalRead (IR2);
   
-  if (statusSensor1 == 1)
+  if (statusSensor1 == 1){
     digitalWrite(LED1, LOW); // LED LOW
   }
   
@@ -364,7 +388,7 @@ void read_IR() {
   }
 
    
-  if (statusSensor2 == 1)
+  if (statusSensor2 == 1){
     digitalWrite(LED2, LOW); // LED LOW
   }
   
@@ -377,7 +401,7 @@ void read_IR() {
 int read_auto_ultra() {
 
   long duration;
-  int distance
+  int distance;
   
   digitalWrite(triga, LOW);
   delayMicroseconds(2); //delay, required as per arduino example code
@@ -391,5 +415,5 @@ int read_auto_ultra() {
   duration = pulseIn(echoa, HIGH);
   distance = duration /72/2;
 
-  return distance
+  return distance;
 }
