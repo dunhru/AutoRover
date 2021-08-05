@@ -27,6 +27,10 @@
 
 //VARIABLES
 
+//OBSTACLE DETECTION
+int frontLimit = 12; 
+int bottomLimit = 4;
+int backLimit = 12;
 
 //MANUAL FOLLOWING
 int xPosJoy = 0;
@@ -128,6 +132,11 @@ void loop()
   mapX = map(xPosJoy, 0, 1023, -512, 512);
   mapY = map(yPosJoy, 0, 1023, -512, 512);
 
+  //mapY > 150 => joystick right
+  //mapy < -150 => joystick left
+  //mapX > 150 => joystick up
+  //mapX < -150 => joystick down
+
   //check that joystick is being moved
   if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
     
@@ -183,8 +192,8 @@ bool obstacle_back() { //if no obstacle, return false
   //Serial.print(distance3);
   //Serial.print(" inches");
   
-  if (distance3 > 12) { //12 inches
-    return false; //no obstacle if sensor reads further than 12 inches
+  if (distance3 > backLimit) { //limit set in inches
+    return false; //no obstacle if sensor reads further than limit
   }
   else {
     return true;
@@ -217,17 +226,15 @@ bool obstacle_front() { //if no obstacle, return false
   duration2 = pulseIn(echoPin2, HIGH);
 
   // Calculating the distance
-
   distance1 = duration1 / 72/ 2; ////sound travels at 72 microseconds per inch, and then divide by 2 because the sound traveled there and back
   distance2 = duration2 / 72 / 2; 
-
 
   //serial prints for testing
   //Serial.print("\n");
   //Serial.print(distance2);
   //Serial.print(" inches");
   
-  if ((distance1 > 12) and (distance2 < 4)) { //obstacle distance limits in inches
+  if ((distance1 > frontLimit) and (distance2 < bottomLimit)) { //obstacle distance limits in inches
     return false; //no obstacles detected ahead or below, the function returns false
   }
   else {
