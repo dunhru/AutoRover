@@ -28,9 +28,9 @@
 //VARIABLES
 
 //OBSTACLE DETECTION
-int frontLimit = 12; 
-int bottomLimit = 4;
-int backLimit = 12;
+int frontLimit = 12; //distance limit in inches
+int bottomLimit = 4; //distance limit in inches
+int backLimit = 12;  //distance limit in inches
 
 //MANUAL FOLLOWING
 int xPosJoy = 0;
