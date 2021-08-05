@@ -39,7 +39,7 @@ int mapY = 0;
 int statusSensorLeft;
 int statusSensorRight;
 float autoDistance;
-int distances[10];
+float distances[10];
 
 void setup()
 {
@@ -422,29 +422,31 @@ void auto_drive() {
     delay(10);
   }
 
-  mean = sumArray(distances[]) / 10; //find mean of distances
-  devs[] = distances[] - mean; // calculate deviations from the mean
-  sdev = sumArray(devs[]) / 10; //calculate standard deviation from this mean
+  mean = sumArray(distances) / 10; //find mean of distances
+  for(int i=0; i<10; i++){
+    devs[i] = distances[i] - mean; // calculate deviations from the mean
+  }
+  sdev = sumArray(devs) / 10; //calculate standard deviation from this mean
 
   pwm_in = int(sdev * kp) + 50;
 
-  if  statusSensorRight == 1 && statusSensorLeft == 0 {
+  if (statusSensorRight == 1 && statusSensorLeft == 0) {
     //case: something is detected on the left
-    analogWrite(motor1_en, pwm_in)
-    analogWrite(motor2_en, pwm_in / 2)
+    analogWrite(motor1_en, pwm_in);
+    analogWrite(motor2_en, pwm_in / 2);
   }
-  else if statusSensorRight == 0 && statusSensorLeft == 1 {
+  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
     //case: something is detected on the right
-    analogWrite(motor1_en, pwm_in / 2)
-    analogWrite(motor2_en, pwm_in)
+    analogWrite(motor1_en, pwm_in / 2);
+    analogWrite(motor2_en, pwm_in);
   }
-  else if statusSensorRight == 1 && statusSensorLeft == 1 {
+  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
     //case: something is detected on both sides
-    analogWrite(motor1_en, pwm_in)
-    analogWrite(motor2_en, pwm_in)
+    analogWrite(motor1_en, pwm_in);
+    analogWrite(motor2_en, pwm_in);
   }
   else {
-    motor_stop();
+    motors_stop();
   }
 }
 
