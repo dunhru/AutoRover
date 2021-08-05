@@ -6,7 +6,7 @@
 #define trigPin3 7 //trig for sensor 3
 
 //Variables
-int frontLimit = 12;
+int frontLimit = 12; 
 int bottomLimit = 4;
 int backLimit = 12;
 
@@ -74,7 +74,7 @@ bool obstacle_back() { //if no obstacle, return false
   //Serial.print(" inches");
   
   if (distance3 > backLimit) { 
-    return false; //no obstacle if sensor reads further than 12 inches
+    return false; //no obstacle if sensor reads further than set limit
   }
   else {
     return true;
