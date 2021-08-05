@@ -64,23 +64,19 @@ void loop() {
 
 
     if(mapY > 150) {
-      Serial.print("\n");
-      Serial.print("joystick right");
+      Serial.println("joystick right");
     }
 
      if(mapY < -150) {
-      Serial.print("\n");
-      Serial.print("joystick left");
+      Serial.println("joystick left");
     }
 
     if(mapX > 150) {
-      Serial.print("\n");
-      Serial.print("joystick up");
+      Serial.println("joystick up");
     }
 
     if(mapX < -150) {
-      Serial.print("\n");
-      Serial.print("joystick down");
+      Serial.println("joystick down");
     }
 
 
