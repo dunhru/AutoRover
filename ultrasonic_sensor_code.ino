@@ -5,6 +5,11 @@
 #define echoPin3 6 //echo for sensor 3
 #define trigPin3 7 //trig for sensor 3
 
+//Variables
+int frontLimit = 12;
+int bottomLimit = 4;
+int backLimit = 12;
+
 void setup() {
   //set all echo pins as inputs:
   pinMode (echoPin1, INPUT); 
@@ -68,7 +73,7 @@ bool obstacle_back() { //if no obstacle, return false
   //Serial.print(distance3);
   //Serial.print(" inches");
   
-  if (distance3 > 12) { //12 inches
+  if (distance3 > backLimit) { 
     return false; //no obstacle if sensor reads further than 12 inches
   }
   else {
@@ -112,7 +117,7 @@ bool obstacle_front() { //if no obstacle, return false
   //Serial.print(distance2);
   //Serial.print(" inches");
   
-  if ((distance1 > 12) and (distance2 < 4)) { //obstacle distance limits in inches
+  if ((distance1 > frontLimit) and (distance2 < bottomLimit)) { //obstacle distance limits in inches
     return false; //no obstacles detected ahead or below, the function returns false
   }
   else {
