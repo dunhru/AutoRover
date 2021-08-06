@@ -91,19 +91,43 @@ void setup()
   Serial.begin(9600); //start serial communication at 9600 baudrate speed
 }
 
-void loop()
+void loop() //controls which type of system is being run
 {
   //HIERARCHY
     //1) obstacle detection
     //2) manual control
     //3) automatic control
 
+  if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
+    //----MANUAL CONTROL OVERRIDE----
+    
+    if(obstacle_front() || obstacle_back()){  //need to avoid any obstacles before manual following can be implemented
+      //----OBSTACLE DETECTION OVERRIDE----
+      obstacle_detection_full(); //complete obstacle detection  
+    }
+    
+    manual_following_full(); //run joystick control
+  }
+  else if(obstacle_front() || obstacle_back()){
+    //----OBSTACLE DETECTION OVERRIDE----
+    obstacle_detection_full(); //complete obstacle detection
+  }
+  else{
+    //----AUTOMATIC CONTROL BASELINE----
+    automatic_following_full(); //run automatic detection otherwise
+  }
+}
 
-    //???? NEEDS TO BE IMPLEMENTED ????
 
 
-  
-  //OBSTACLE DETECTION
+
+//----------IMPLEMENTATIONS----------
+
+
+
+//OBSTACLE DETECTION
+
+void obstacle_detection_full(){
   if (obstacle_front()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
     Serial.print("WARNING: FRONT OBSTACLE DETECTED");
@@ -120,10 +144,11 @@ void loop()
     Serial.print("\n");
     Serial.print("no obstacles detected");
   }
-  
-  //AUTOMATIC FOLLOWING
-  
-  //MANUAL FOLLOWING
+}
+
+//MANUAL FOLLOWING
+
+void manual_following_full(){
   xPosJoy = analogRead(joyX);
   yPosJoy = analogRead(joyY);
   swStateJoy = digitalRead(joySw);
@@ -138,21 +163,42 @@ void loop()
   //check that joystick is being moved
   if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
     
-    int x_speed = map(mapX, 0, 1023, -70, 70); 
-    int y_offset = map(mapY, 0, 1023, -255, 255); 
+    int x_speed = map(mapX, 0, 1023, -100, 100); //moves back and forth slowly
+    int y_offset = map(mapY, 0, 1023, -155, 155); //turn speed mapping
     
     //set motor speeds
     int left_speed = x_speed + y_offset;
     int right_speed = x_speed - y_offset;
 
     motors_speed_individual(left_speed, right_speed);
-    
-    //MAP mapX TO A VAR TO BE AN OFFSET
-    //MAP mapY TO SPEED FORWARD OR BACKWORDS
   }
 }
 
+//AUTOMATIC FOLLOWING
 
+void automatic_following_full(){
+
+
+
+
+
+
+
+  // ?????                    ?????
+  // ?????                    ?????
+  // ?????                    ?????
+  // ????? NEED CODE FOR THIS ?????
+  // ?????                    ?????
+  // ?????                    ?????
+  // ?????                    ?????
+
+
+
+
+
+
+  
+}
 
 
 //----------FUNCTIONS----------
