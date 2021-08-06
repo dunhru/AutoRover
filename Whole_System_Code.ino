@@ -15,7 +15,7 @@
 
 #define joyX A0 //joystick X
 #define joyY A1 //joystick Y
-#define joySw 1 //joystick switch
+#define joySw 18 //joystick switch - controls attachInterrupt                                                                             // ????? NEWLY UPDATED ?????
 
 #define motor1_1 31 //motor 1_1
 #define motor1_2 33 //motor 1_2
@@ -39,6 +39,8 @@ int swStateJoy = 0;
 int mapX = 0;
 int mapY = 0;
 
+bool manual_stop = false; //use joystick switch to toggle emergency stop                                                                   // ????? NEWLY ADDED ?????
+
 //AUTOMATIC FOLLOWING
 int statusSensorLeft;
 int statusSensorRight;
@@ -50,6 +52,10 @@ void setup()
   // Turn off motors - Initial state
   motors_stop();
   motors_speed(0); //start motors at 0 speed
+
+  //MANUAL SHUTOFF
+  pinMode(joySw, INPUT_PULLUP);                                                                                                                // ????? NEWLY ADDED ?????
+  attachInterrupt(joySw, manual_shutoff, CHANGE);
    
   //OBSTACLE DETECTION
   pinMode(echoPin1, INPUT); //obstacle ultrasonic echo 1
@@ -93,28 +99,39 @@ void setup()
 
 void loop() //controls which type of system is being run
 {
-  //HIERARCHY
-    //1) obstacle detection
-    //2) manual control
-    //3) automatic control
+  //IF IN MANUAL STOP MODE, DO NOT RUN CODE                                                                                                 // ????? NEWLY ADDED ?????
+  if(manual_stop == false){
 
-  if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
-    //----MANUAL CONTROL OVERRIDE----
-    
-    if(obstacle_front() || obstacle_back()){  //need to avoid any obstacles before manual following can be implemented
-      //----OBSTACLE DETECTION OVERRIDE----
-      obstacle_detection_full(); //complete obstacle detection  
+
+    //HIERARCHY
+      //1) obstacle detection
+      //2) manual control
+      //3) automatic control
+  
+    if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
+      //----MANUAL CONTROL OVERRIDE----
+      
+      if(obstacle_front() || obstacle_back()){  //need to avoid any obstacles before manual following can be implemented
+        //----OBSTACLE DETECTION OVERRIDE----
+        obstacle_detection_full(); //complete obstacle detection  
+      }
+      
+      manual_following_full(); //run joystick control
     }
+    else if(obstacle_front() || obstacle_back()){
+      //----OBSTACLE DETECTION OVERRIDE----
+      obstacle_detection_full(); //complete obstacle detection
+    }
+    else{
+      //----AUTOMATIC CONTROL BASELINE----
+      auto_drive(); //run automatic detection otherwise
+    } 
+
     
-    manual_following_full(); //run joystick control
   }
-  else if(obstacle_front() || obstacle_back()){
-    //----OBSTACLE DETECTION OVERRIDE----
-    obstacle_detection_full(); //complete obstacle detection
-  }
-  else{
-    //----AUTOMATIC CONTROL BASELINE----
-    auto_drive(); //run automatic detection otherwise
+  else{   //STOP MOTORS IF MANUAL STOP ENACTED
+    motors_stop();
+    motors_speed(0); //stop motors from running
   }
 }
 
@@ -148,10 +165,21 @@ void obstacle_detection_full(){
 
 //MANUAL FOLLOWING
 
+void manual_shutoff(){                                                                                                                    // ????? NEWLY ADDED ?????
+  swStateJoy = digitalRead(joySw); //0 = unclicked, 1 = clicked                                                     // ????? removed from full manual function ?????
+
+  //update manual stop state
+  if(manual_stop == false){
+    manual_stop = true;
+  }
+  else{
+    manual_stop = false;
+  }
+}
+
 void manual_following_full(){
   xPosJoy = analogRead(joyX);
   yPosJoy = analogRead(joyY);
-  swStateJoy = digitalRead(joySw);
   mapX = map(xPosJoy, 0, 1023, -512, 512);
   mapY = map(yPosJoy, 0, 1023, -512, 512);
 
