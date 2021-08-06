@@ -49,7 +49,7 @@ void setup()
 {
   // Turn off motors - Initial state
   motors_stop();
-  motors_speed(0);
+  motors_speed(0); //start motors at 0 speed
    
   //OBSTACLE DETECTION
   pinMode(echoPin1, INPUT); //obstacle ultrasonic echo 1
@@ -82,8 +82,6 @@ void setup()
   pinMode(motor2_1, OUTPUT); //motor 2_1
   pinMode(motor2_2, OUTPUT); //motor 2_2 
   pinMode(motor2_en, OUTPUT); //motor2_en 
-
-  motors_speed(0); //start motors at 0 speed
   
   digitalWrite(motor1_1, LOW);
   digitalWrite(motor1_2, LOW);
@@ -140,12 +138,12 @@ void loop()
   //check that joystick is being moved
   if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
     
-    int x_offset = map(mapX, 0, 1023, -70, 70); 
-    int y_speed = map(mapY, 0, 1023, -255, 255); 
+    int x_speed = map(mapX, 0, 1023, -70, 70); 
+    int y_offset = map(mapY, 0, 1023, -255, 255); 
     
     //set motor speeds
-    int left_speed = y_speed + x_offset;
-    int right_speed = y_speed - x_offset;
+    int left_speed = x_speed + y_offset;
+    int right_speed = x_speed - y_offset;
 
     motors_speed_individual(left_speed, right_speed);
     
