@@ -114,7 +114,7 @@ void loop() //controls which type of system is being run
   }
   else{
     //----AUTOMATIC CONTROL BASELINE----
-    automatic_following_full(); //run automatic detection otherwise
+    auto_drive(); //run automatic detection otherwise
   }
 }
 
@@ -176,30 +176,46 @@ void manual_following_full(){
 
 //AUTOMATIC FOLLOWING
 
-void automatic_following_full(){
+void auto_drive() {
+  float mean;
+  float devs[10];
+  float sdev;
+  int pwm_in;
+  float kp = 0; // proportional control constant
+  read_IR(); //read directional IR values
+  for (int i = 0; i < 10; i++) {
+    read_auto_ultra();
+    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
+    delay(10);
+  }
 
+  mean = sumArray(distances) / 10; //find mean of distances
+  for(int i=0; i<10; i++){
+    devs[i] = distances[i] - mean; // calculate deviations from the mean
+  }
+  sdev = sumArray(devs) / 10; //calculate standard deviation from this mean
 
+  pwm_in = int(sdev * kp) + 50;
 
-
-
-
-
-  // ?????                    ?????
-  // ?????                    ?????
-  // ?????                    ?????
-  // ????? NEED CODE FOR THIS ?????
-  // ?????                    ?????
-  // ?????                    ?????
-  // ?????                    ?????
-
-
-
-
-
-
-  
+  if (statusSensorRight == 1 && statusSensorLeft == 0) {
+    //case: something is detected on the left
+    analogWrite(motor1_en, pwm_in);
+    analogWrite(motor2_en, pwm_in / 2);
+  }
+  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
+    //case: something is detected on the right
+    analogWrite(motor1_en, pwm_in / 2);
+    analogWrite(motor2_en, pwm_in);
+  }
+  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
+    //case: something is detected on both sides
+    analogWrite(motor1_en, pwm_in);
+    analogWrite(motor2_en, pwm_in);
+  }
+  else {
+    motors_stop();
+  }
 }
-
 
 //----------FUNCTIONS----------
 
@@ -458,47 +474,6 @@ void read_auto_ultra() {
 
   duration = pulseIn(echoa, HIGH);
   autoDistance = duration / 72 / 2;
-}
-
-void auto_drive() {
-  float mean;
-  float devs[10];
-  float sdev;
-  int pwm_in;
-  float kp = 0; // proportional control constant
-  read_IR(); //read directional IR values
-  for (int i = 0; i < 10; i++) {
-    read_auto_ultra();
-    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
-    delay(10);
-  }
-
-  mean = sumArray(distances) / 10; //find mean of distances
-  for(int i=0; i<10; i++){
-    devs[i] = distances[i] - mean; // calculate deviations from the mean
-  }
-  sdev = sumArray(devs) / 10; //calculate standard deviation from this mean
-
-  pwm_in = int(sdev * kp) + 50;
-
-  if (statusSensorRight == 1 && statusSensorLeft == 0) {
-    //case: something is detected on the left
-    analogWrite(motor1_en, pwm_in);
-    analogWrite(motor2_en, pwm_in / 2);
-  }
-  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
-    //case: something is detected on the right
-    analogWrite(motor1_en, pwm_in / 2);
-    analogWrite(motor2_en, pwm_in);
-  }
-  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
-    //case: something is detected on both sides
-    analogWrite(motor1_en, pwm_in);
-    analogWrite(motor2_en, pwm_in);
-  }
-  else {
-    motors_stop();
-  }
 }
 
 float sumArray(float d[10]){
