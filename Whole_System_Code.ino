@@ -19,10 +19,10 @@
 
 #define motor1_1 31 //motor 1_1
 #define motor1_2 33 //motor 1_2
-#define motor1_en 9 //motor 1_en
+#define motor1_en 6 //motor 1_en
 #define motor2_1 37 //motor 2_1
 #define motor2_2 39 //motor 2_2
-#define motor2_en 10 //motor 2_en
+#define motor2_en 7 //motor 2_en
 
 
 //VARIABLES
