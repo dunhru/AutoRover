@@ -8,14 +8,14 @@
 #define echoa 4 //automatic ultrasonic echo
 #define triga 5 //automatic ultrasonic trigger
 
-#define IR1 2 //IR sensor 1
+#define IR1 52 //IR sensor 1
 #define IR2 3 //IR sensor 2
 #define LED1 4 //IR1 led
 #define LED2 5 //IR2 led
 
 #define joyX A0 //joystick X
 #define joyY A1 //joystick Y
-#define joySw 52 //joystick switch - controls attachInterrupt                                                                             // ????? NEWLY UPDATED ?????
+#define joySw 2 //joystick switch - controls attachInterrupt                                                                             // ????? NEWLY UPDATED ?????
 
 #define motor1_1 31 //motor 1_1
 #define motor1_2 33 //motor 1_2
