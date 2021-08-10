@@ -51,7 +51,7 @@ void setup()
 {
   // Turn off motors - Initial state
   motors_stop();
-  motors_speed(0); //start motors at 0 speed
+  motors_speed_func(0); //start motors at 0 speed
 
   //MANUAL SHUTOFF
   pinMode(joySw, INPUT_PULLUP);                                                                                                                // ????? NEWLY ADDED ?????
@@ -99,6 +99,9 @@ void setup()
 
 void loop() //controls which type of system is being run
 {
+
+  Serial.println("Manual stop state: " + manual_stop);
+  
   //IF IN MANUAL STOP MODE, DO NOT RUN CODE                                                                                                 // ????? NEWLY ADDED ?????
   if(manual_stop == false){
 
@@ -107,23 +110,38 @@ void loop() //controls which type of system is being run
       //1) obstacle detection
       //2) manual control
       //3) automatic control
+
+    xPosJoy = analogRead(joyX);
+    yPosJoy = analogRead(joyY);
+    mapX = map(xPosJoy, 0, 1023, -512, 512);
+    mapY = map(yPosJoy, 0, 1023, -512, 512);
+    Serial.println("\n\nX_pos: " + xPosJoy);
+    Serial.println("\n\nY_pos: " + yPosJoy);
+    Serial.println("\n\nX: " + mapX);
+    Serial.println("\n\nY: " + mapY);
+
   
     if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
       //----MANUAL CONTROL OVERRIDE----
       
       if(obstacle_front() || obstacle_back()){  //need to avoid any obstacles before manual following can be implemented
         //----OBSTACLE DETECTION OVERRIDE----
+        Serial.println("\nObstacle detection - 1");
         obstacle_detection_full(); //complete obstacle detection  
       }
       
       manual_following_full(); //run joystick control
+        Serial.println("\nManual control");
     }
     else if(obstacle_front() || obstacle_back()){
       //----OBSTACLE DETECTION OVERRIDE----
+      Serial.println("\nObstacle detection - 1");
       obstacle_detection_full(); //complete obstacle detection
     }
     else{
       //----AUTOMATIC CONTROL BASELINE----
+      Serial.println("\nAutomatic control");
+      
       auto_drive(); //run automatic detection otherwise
     } 
 
@@ -131,7 +149,7 @@ void loop() //controls which type of system is being run
   }
   else{   //STOP MOTORS IF MANUAL STOP ENACTED
     motors_stop();
-    motors_speed(0); //stop motors from running
+    motors_speed_func(0); //stop motors from running
   }
 }
 
@@ -147,25 +165,26 @@ void loop() //controls which type of system is being run
 void obstacle_detection_full(){
   if (obstacle_front()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
-    Serial.print("WARNING: FRONT OBSTACLE DETECTED");
+    Serial.println("WARNING: FRONT OBSTACLE DETECTED");
 
     avoid_obstacle();
   }
   if (obstacle_back()) { //obstacle_front is true of there is an obstacle
     Serial.print("\n");
-    Serial.print("WARNING: BACK OBSTACLE DETECTED");
+    Serial.println("WARNING: BACK OBSTACLE DETECTED");
 
     avoid_obstacle();
   }
   else {
     Serial.print("\n");
-    Serial.print("no obstacles detected");
+    Serial.println("no obstacles detected");
   }
 }
 
 //MANUAL FOLLOWING
 
 void manual_shutoff(){                                                                                                                    // ????? NEWLY ADDED ?????
+  Serial.println("Manual shutoff - state change");
   swStateJoy = digitalRead(joySw); //0 = unclicked, 1 = clicked                                                     // ????? removed from full manual function ?????
 
   //update manual stop state
@@ -178,6 +197,8 @@ void manual_shutoff(){                                                          
 }
 
 void manual_following_full(){
+  Serial.println("Manual following function");
+  
   xPosJoy = analogRead(joyX);
   yPosJoy = analogRead(joyY);
   mapX = map(xPosJoy, 0, 1023, -512, 512);
@@ -331,17 +352,26 @@ bool obstacle_front() { //if no obstacle, return false
 }
 
 void avoid_obstacle(){ //turn in place to avoid obstacle
+    Serial.println("Avoiding obstacle");
+  
     motors_stop(); //stop movement
     //turn until safe
     int count = 0;
-    while(obstacle_back()){
+
+    motor_startup();
+    
+    while(obstacle_back() || obstacle_front()){
       if(count<30){
         stationary_turn_right(30); //turn right with movement speed 30
+        Serial.println("RIGHT TEST");
       }
       else{
         stationary_turn_left(50); //turn left with movement speed 50
+        Serial.println("LEFT TEST");
       }
       count++; //if cannot avoid obstacle for 30 cycles in one direction, turn in other direction
+      delay(10);
+      Serial.println("Count: " + count);
     }
 }
 
@@ -361,13 +391,13 @@ void motor_startup() { //quick pulse to turn on motors
   
   delay(20);
   
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, LOW);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, LOW);
+  analogWrite(motor1_en, 0);
+  analogWrite(motor2_en, 0);
 }
 
 void motors_stop() { //stop the motors
+  Serial.println("Motors stop");
+  
   digitalWrite(motor1_1, LOW);
   digitalWrite(motor1_2, LOW);
   digitalWrite(motor2_1, LOW);
@@ -375,6 +405,8 @@ void motors_stop() { //stop the motors
 }
 
 void motors_set_backwards() { //switch motor direction to reverse
+  Serial.println("Motors set backwards");
+  
   digitalWrite(motor1_1, HIGH);
   digitalWrite(motor1_2, LOW);
   digitalWrite(motor2_1, HIGH);
@@ -382,13 +414,17 @@ void motors_set_backwards() { //switch motor direction to reverse
 }
   
 void motors_set_forwards() { //switch motor direction to forward
+  Serial.println("Motors set forwards");
+  
   digitalWrite(motor1_1, LOW);
   digitalWrite(motor1_2, HIGH);
   digitalWrite(motor2_1, LOW);
   digitalWrite(motor2_2, HIGH);
 }
 
-void motors_speed(int motors_speed) { //input movement speed
+void motors_speed_func(int motors_speed) { //input movement speed
+  Serial.println("Motors speed: " + motors_speed);
+  
   //prevent value from exceed 255
   if(motors_speed>255){
     motors_speed = 255;
@@ -401,6 +437,8 @@ void motors_speed(int motors_speed) { //input movement speed
 }
 
 void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movement speed
+  Serial.println("Motor speeds: " + motor1_speed + ' ' + motor2_speed);
+  
   //prevent value from exceed 255
   if(motor1_speed>255){
     motor1_speed = 255;
@@ -419,6 +457,8 @@ void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movem
 }
 
 void moving_turn_right(int motors_speed) { //turn right while moving forward
+  Serial.println("Moving, turn right - " + motors_speed);
+  
   //prevent value from exceed 255
   if(motors_speed>55){
     motors_speed = 55;
@@ -434,6 +474,8 @@ void moving_turn_right(int motors_speed) { //turn right while moving forward
 }
 
 void moving_turn_left(int motors_speed) { //turn left while moving forward
+  Serial.println("Moving, turn left - " + motors_speed);
+  
   //prevent value from exceed 255
   if(motors_speed>55){
     motors_speed = 55;
@@ -450,6 +492,8 @@ void moving_turn_left(int motors_speed) { //turn left while moving forward
 
 
 void stationary_turn_right(int motors_speed) { //turn right in place
+  Serial.println("Stationary, turn right - " + motors_speed);
+  
   //prevent value from exceed 255
   if(motors_speed>255){
     motors_speed = 255;
@@ -465,6 +509,8 @@ void stationary_turn_right(int motors_speed) { //turn right in place
 }
 
 void stationary_turn_left(int motors_speed) { //turn left in place
+  Serial.println("Stationary, turn left - " + motors_speed);
+  
   //prevent value from exceed 255
   if(motors_speed>255){
     motors_speed = 255;
