@@ -15,7 +15,7 @@
 
 #define joyX A0 //joystick X
 #define joyY A1 //joystick Y
-#define joySw 18 //joystick switch - controls attachInterrupt                                                                             // ????? NEWLY UPDATED ?????
+#define joySw 52 //joystick switch - controls attachInterrupt                                                                             // ????? NEWLY UPDATED ?????
 
 #define motor1_1 31 //motor 1_1
 #define motor1_2 33 //motor 1_2
