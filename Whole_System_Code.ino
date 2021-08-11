@@ -5,13 +5,11 @@
 #define echoPin3 12 //obstacle ultrasonic echo 3
 #define trigPin3 13 //obstacle ultrasonic trigger 3
 
-#define echoa 4 //automatic ultrasonic echo
-#define triga 5 //automatic ultrasonic trigger
+#define echoPin 4 //automatic ultrasonic echo
+#define trigPin 5 //automatic ultrasonic trigger
 
-#define IR1 52 //IR sensor 1
-#define IR2 3 //IR sensor 2
-#define LED1 4 //IR1 led
-#define LED2 5 //IR2 led
+#define IRR 52 //IR sensor 1
+#define IRL 3 //IR sensor 2
 
 #define joyX A0 //joystick X
 #define joyY A1 //joystick Y
@@ -45,7 +43,6 @@ bool manual_stop = false; //use joystick switch to toggle emergency stop        
 int statusSensorLeft;
 int statusSensorRight;
 float autoDistance;
-float distances[10];
 
 void setup()
 {
@@ -68,13 +65,11 @@ void setup()
   pinMode(trigPin3, OUTPUT); //obstacle ultrasonic trigger 3
   
   //AUTOMATIC FOLLOWING
-  pinMode(echoa, INPUT); //automatic ultrasonic echo
-  pinMode(triga, OUTPUT); //automatic ultrasonic trigger
+  pinMode(echoPin, INPUT); //automatic ultrasonic echo
+  pinMode(trigPin, OUTPUT); //automatic ultrasonic trigger
   
-  pinMode (IR1, INPUT); //IR sensor 1
-  pinMode (IR2, INPUT); //IR sensor 2
-  pinMode (LED1, OUTPUT); 
-  pinMode (LED2, OUTPUT);
+  pinMode (IRR, INPUT); //IR sensor 1
+  pinMode (IRL, INPUT); //IR sensor 2
   
   //MANUAL FOLLOWING
   pinMode (joyX, INPUT); //joystick X
@@ -220,49 +215,6 @@ void manual_following_full(){
     int right_speed = x_speed - y_offset;
 
     motors_speed_individual(left_speed, right_speed);
-  }
-}
-
-//AUTOMATIC FOLLOWING
-
-void auto_drive() {
-  float mean;
-  float devs[10];
-  float sdev;
-  int pwm_in;
-  float kp = 0; // proportional control constant
-  read_IR(); //read directional IR values
-  for (int i = 0; i < 10; i++) {
-    read_auto_ultra();
-    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
-    delay(10);
-  }
-
-  mean = sumArray(distances) / 10; //find mean of distances
-  for(int i=0; i<10; i++){
-    devs[i] = distances[i] - mean; // calculate deviations from the mean
-  }
-  sdev = sumArray(devs) / 10; //calculate standard deviation from this mean
-
-  pwm_in = int(sdev * kp) + 50;
-
-  if (statusSensorRight == 1 && statusSensorLeft == 0) {
-    //case: something is detected on the left
-    analogWrite(motor1_en, pwm_in);
-    analogWrite(motor2_en, pwm_in / 2);
-  }
-  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
-    //case: something is detected on the right
-    analogWrite(motor1_en, pwm_in / 2);
-    analogWrite(motor2_en, pwm_in);
-  }
-  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
-    //case: something is detected on both sides
-    analogWrite(motor1_en, pwm_in);
-    analogWrite(motor2_en, pwm_in);
-  }
-  else {
-    motors_stop();
   }
 }
 
@@ -528,32 +480,84 @@ void stationary_turn_left(int motors_speed) { //turn left in place
 
 //AUTOMATIC
 
+float calculateSD(float data[])
+{
+    float sum = 0.0, mean, standardDeviation = 0.0;
+
+    int i;
+
+    for(i = 0; i < 10; ++i)
+    {
+        sum += data[i];
+    }
+
+    mean = sum/10;
+
+    for(i = 0; i < 10; ++i)
+        standardDeviation += pow(data[i] - mean, 2);
+
+    return sqrt(standardDeviation / 10);
+}
+
 void read_IR() {
-  statusSensorRight = digitalRead (IR1);
-  statusSensorLeft = digitalRead (IR2);
+  statusSensorRight = digitalRead (IRR);
+  statusSensorLeft = digitalRead (IRL);
 }
 
 void read_auto_ultra() {
 
   long duration;
 
-  digitalWrite(triga, LOW);
+  digitalWrite(trigPin, LOW);
   delayMicroseconds(2); //delay, required as per arduino example code
 
   //set trigPins high for 10 microseconds
-  digitalWrite(triga, HIGH);
+  digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
 
-  digitalWrite(triga, LOW);
+  digitalWrite(trigPin, LOW);
 
-  duration = pulseIn(echoa, HIGH);
+  duration = pulseIn(echoPin, HIGH);
   autoDistance = duration / 72 / 2;
 }
 
-float sumArray(float d[10]){
-  float sum = 0;
-  for(int i; i < 10; i++){
-    sum = sum + d[i];
+void auto_drive() {
+  float mean;
+  float devs[10];
+  float sdev;
+  float distances[10];
+  int pwm_in;
+  float kp = 0; // proportional control constant
+  read_IR(); //read directional IR values
+  for (int i = 0; i < 10; i++) {
+    read_auto_ultra();
+    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
+    delay(50);
   }
-  return sum;
+  
+  sdev = calculateSD(distances);
+
+  pwm_in = int(sdev * kp) + 50;
+
+  if  (statusSensorRight == 1 && statusSensorLeft == 0) {
+    //case: something is detected on the left
+    Serial.println("left ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
+    //case: something is detected on the right
+    Serial.println("right ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
+    //case: something is detected on both sides
+    Serial.println("centre ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else {
+    Serial.println("none");
+  }
 }
