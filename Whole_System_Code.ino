@@ -37,7 +37,7 @@ int swStateJoy = 0;
 int mapX = 0;
 int mapY = 0;
 
-bool manual_stop = false; //use joystick switch to toggle emergency stop                                                                   // ????? NEWLY ADDED ?????
+bool manual_stop = 0; //use joystick switch to toggle emergency stop                                                                   // ????? NEWLY ADDED ?????
 
 //AUTOMATIC FOLLOWING
 int statusSensorLeft;
@@ -51,8 +51,8 @@ void setup()
   motors_speed_func(0); //start motors at 0 speed
 
   //MANUAL SHUTOFF
-  pinMode(joySw, INPUT_PULLUP);                                                                                                                // ????? NEWLY ADDED ?????
-  attachInterrupt(joySw, manual_shutoff, CHANGE);
+  pinMode(joySw, INPUT_PULLUP);                                                                                                             // ????? NEWLY ADDED ?????
+  attachInterrupt(digitalPinToInterrupt(joySw), manual_shutoff, CHANGE);
    
   //OBSTACLE DETECTION
   pinMode(echoPin1, INPUT); //obstacle ultrasonic echo 1
@@ -95,11 +95,15 @@ void setup()
 void loop() //controls which type of system is being run
 {
 
-  Serial.println("Manual stop state: " + manual_stop);
+  Serial.print("Manual stop state: ");
+  Serial.println(manual_stop);
+
+  motors_set_forwards();
+
+//  shutoff_check();
   
   //IF IN MANUAL STOP MODE, DO NOT RUN CODE                                                                                                 // ????? NEWLY ADDED ?????
-  if(manual_stop == false){
-
+  if(manual_stop == 0){
 
     //HIERARCHY
       //1) obstacle detection
@@ -110,11 +114,15 @@ void loop() //controls which type of system is being run
     yPosJoy = analogRead(joyY);
     mapX = map(xPosJoy, 0, 1023, -512, 512);
     mapY = map(yPosJoy, 0, 1023, -512, 512);
-    Serial.println("\n\nX_pos: " + xPosJoy);
-    Serial.println("\n\nY_pos: " + yPosJoy);
-    Serial.println("\n\nX: " + mapX);
-    Serial.println("\n\nY: " + mapY);
-
+    
+//    Serial.print("\nX_pos: ");
+//    Serial.println(xPosJoy);
+//    Serial.print("Y_pos: ");
+//    Serial.println(yPosJoy);
+//    Serial.print("X: ");
+//    Serial.println(mapX);
+//    Serial.print("Y: ");
+//    Serial.println(mapY);
   
     if(mapX > 150 || mapX < -150 || mapY > 150 || mapY < -150){
       //----MANUAL CONTROL OVERRIDE----
@@ -126,7 +134,7 @@ void loop() //controls which type of system is being run
       }
       
       manual_following_full(); //run joystick control
-        Serial.println("\nManual control");
+      Serial.println("\nManual control");
     }
     else if(obstacle_front() || obstacle_back()){
       //----OBSTACLE DETECTION OVERRIDE----
@@ -136,11 +144,8 @@ void loop() //controls which type of system is being run
     else{
       //----AUTOMATIC CONTROL BASELINE----
       Serial.println("\nAutomatic control");
-      
-      auto_drive(); //run automatic detection otherwise
-    } 
-
-    
+//      auto_drive(); //run automatic detection otherwise
+    }   
   }
   else{   //STOP MOTORS IF MANUAL STOP ENACTED
     motors_stop();
@@ -179,15 +184,15 @@ void obstacle_detection_full(){
 //MANUAL FOLLOWING
 
 void manual_shutoff(){                                                                                                                    // ????? NEWLY ADDED ?????
-  Serial.println("Manual shutoff - state change");
+  Serial.println("\nManual shutoff - state change");
   swStateJoy = digitalRead(joySw); //0 = unclicked, 1 = clicked                                                     // ????? removed from full manual function ?????
 
   //update manual stop state
-  if(manual_stop == false){
-    manual_stop = true;
+  if(manual_stop == 0){
+    manual_stop = 1;
   }
   else{
-    manual_stop = false;
+    manual_stop = 0;
   }
 }
 
@@ -213,8 +218,51 @@ void manual_following_full(){
     //set motor speeds
     int left_speed = x_speed + y_offset;
     int right_speed = x_speed - y_offset;
-
+    
     motors_speed_individual(left_speed, right_speed);
+  }
+}
+
+//AUTOMATIC FOLLOWING
+
+void auto_drive() {
+  float mean;
+  float devs[10];
+  float sdev;
+  float distances[10];
+  int pwm_in;
+  float kp = 0; // proportional control constant
+  read_IR(); //read directional IR values
+  for (int i = 0; i < 10; i++) {
+    read_auto_ultra();
+    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
+    delay(50);
+  }
+  
+  sdev = calculateSD(distances);
+
+  pwm_in = int(sdev * kp) + 50;
+
+  if  (statusSensorRight == 1 && statusSensorLeft == 0) {
+    //case: something is detected on the left
+    Serial.println("left ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
+    //case: something is detected on the right
+    Serial.println("right ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
+    //case: something is detected on both sides
+    Serial.println("centre ");
+    Serial.print("standard deviation: ");
+    Serial.println(sdev);
+  }
+  else {
+    Serial.println("none");
   }
 }
 
@@ -314,17 +362,26 @@ void avoid_obstacle(){ //turn in place to avoid obstacle
     
     while(obstacle_back() || obstacle_front()){
       if(count<30){
-        stationary_turn_right(30); //turn right with movement speed 30
+        stationary_turn_right(90); //turn right with movement speed 30
         Serial.println("RIGHT TEST");
       }
       else{
-        stationary_turn_left(50); //turn left with movement speed 50
+        stationary_turn_left(110); //turn left with movement speed 50
         Serial.println("LEFT TEST");
       }
       count++; //if cannot avoid obstacle for 30 cycles in one direction, turn in other direction
       delay(10);
       Serial.println("Count: " + count);
     }
+}
+
+
+//MANUAL CONTROL
+
+void shutoff_check(){
+  if(digitalRead(joySw)==0){
+    manual_shutoff();
+  }
 }
 
 
@@ -375,7 +432,8 @@ void motors_set_forwards() { //switch motor direction to forward
 }
 
 void motors_speed_func(int motors_speed) { //input movement speed
-  Serial.println("Motors speed: " + motors_speed);
+  Serial.print("\nMotors speed (func): ");
+  Serial.println(motors_speed);
   
   //prevent value from exceed 255
   if(motors_speed>255){
@@ -389,7 +447,15 @@ void motors_speed_func(int motors_speed) { //input movement speed
 }
 
 void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movement speed
-  Serial.println("Motor speeds: " + motor1_speed + ' ' + motor2_speed);
+  Serial.print("Motor speeds: ");
+  Serial.print(motor1_speed);
+  Serial.print(' ');
+  Serial.println(motor2_speed);
+
+  check_direction(motor1_speed, motor2_speed);
+  motor1_speed = abs(motor1_speed);
+  motor2_speed = abs(motor2_speed);
+  
   
   //prevent value from exceed 255
   if(motor1_speed>255){
@@ -404,6 +470,9 @@ void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movem
   else if(motor2_speed<0){
     motor2_speed = 0;
   }
+  
+  motors_set_forwards();
+  
   analogWrite(motor1_en, motor1_speed);
   analogWrite(motor2_en, motor2_speed);
 }
@@ -419,8 +488,13 @@ void moving_turn_right(int motors_speed) { //turn right while moving forward
     motors_speed = 0;
   }
   
-  int motor1_speed = 200 - motors_speed;
-  int motor2_speed = 200 + motors_speed;
+  int motor1_speed = 150 - motors_speed;
+  int motor2_speed = 150 + motors_speed;
+
+  check_direction(motor1_speed, motor2_speed);
+  motor1_speed = abs(motor1_speed);
+  motor2_speed = abs(motor2_speed);
+  
   analogWrite(motor1_en, motor1_speed);
   analogWrite(motor2_en, motor2_speed);
 }
@@ -436,8 +510,13 @@ void moving_turn_left(int motors_speed) { //turn left while moving forward
     motors_speed = 0;
   }
   
-  int motor1_speed = 200 + motors_speed;
-  int motor2_speed = 200 - motors_speed;
+  int motor1_speed = 150 + motors_speed;
+  int motor2_speed = 150 - motors_speed;
+
+  check_direction(motor1_speed, motor2_speed);
+  motor1_speed = abs(motor1_speed);
+  motor2_speed = abs(motor2_speed);
+  
   analogWrite(motor1_en, motor1_speed);
   analogWrite(motor2_en, motor2_speed);
 }
@@ -475,6 +554,26 @@ void stationary_turn_left(int motors_speed) { //turn left in place
   int motor2_speed = 0 - motors_speed;
   analogWrite(motor1_en, motor1_speed);
   analogWrite(motor2_en, motor2_speed);
+}
+
+void check_direction(int motor1, int motor2){
+  if(motor1 < 0){
+    digitalWrite(motor1_1, HIGH);
+    digitalWrite(motor1_2, LOW);
+  }
+  else if(motor1 >= 0){
+    digitalWrite(motor1_1, LOW);
+    digitalWrite(motor1_2, HIGH);
+  }
+  
+  if(motor2 < 0){
+    digitalWrite(motor2_1, HIGH);
+    digitalWrite(motor2_2, LOW);
+  }
+  else if(motor2 >= 0){
+    digitalWrite(motor2_1, LOW);
+    digitalWrite(motor2_2, HIGH);
+  }
 }
 
 
@@ -519,45 +618,4 @@ void read_auto_ultra() {
 
   duration = pulseIn(echoPin, HIGH);
   autoDistance = duration / 72 / 2;
-}
-
-void auto_drive() {
-  float mean;
-  float devs[10];
-  float sdev;
-  float distances[10];
-  int pwm_in;
-  float kp = 0; // proportional control constant
-  read_IR(); //read directional IR values
-  for (int i = 0; i < 10; i++) {
-    read_auto_ultra();
-    distances[i] = autoDistance; //read 10 utrasonic values and input into size 10 array
-    delay(50);
-  }
-  
-  sdev = calculateSD(distances);
-
-  pwm_in = int(sdev * kp) + 50;
-
-  if  (statusSensorRight == 1 && statusSensorLeft == 0) {
-    //case: something is detected on the left
-    Serial.println("left ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
-  }
-  else if (statusSensorRight == 0 && statusSensorLeft == 1) {
-    //case: something is detected on the right
-    Serial.println("right ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
-  }
-  else if (statusSensorRight == 1 && statusSensorLeft == 1) {
-    //case: something is detected on both sides
-    Serial.println("centre ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
-  }
-  else {
-    Serial.println("none");
-  }
 }
