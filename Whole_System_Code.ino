@@ -5,8 +5,8 @@
 #define echoPin3 12 //obstacle ultrasonic echo 3
 #define trigPin3 13 //obstacle ultrasonic trigger 3
 
-#define echoPin 4 //automatic ultrasonic echo
-#define trigPin 5 //automatic ultrasonic trigger
+#define echoPin 8 //automatic ultrasonic echo
+#define trigPin 9 //automatic ultrasonic trigger
 
 #define IRR 52 //IR sensor 1
 #define IRL 3 //IR sensor 2
