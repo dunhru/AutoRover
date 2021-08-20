@@ -217,6 +217,29 @@ void manual_following_full() {
     int left_speed = x_speed + y_offset;
     int right_speed = x_speed - y_offset;
 
+    Serial.print("X_SPEED: ");
+    Serial.println(x_speed);
+    Serial.print("Y_SPEED");
+    Serial.println(y_offset);
+
+    check_direction(left_speed, right_speed);
+    left_speed = abs(left_speed);
+    right_speed = abs(right_speed);
+
+    if(left_speed > 255){
+      left_speed = 255;
+    }
+    if(left_speed < 0){
+      left_speed = 0;
+    }
+    if(right_speed > 255){
+      right_speed = 255;
+    }
+    if(right_speed < 0){
+      right_speed = 0;
+    }
+    
+    motor_startup();
     motors_speed_individual(left_speed, right_speed);
   }
 }
@@ -229,7 +252,7 @@ void auto_drive() {
   float sdev;
   float distances[10];
   int pwm_in;
-  float kp = 0; // proportional control constant
+  float kp = 20; // proportional control constant
   read_IR(); //read directional IR values
   for (int i = 0; i < 10; i++) {
     read_auto_ultra();
@@ -240,29 +263,39 @@ void auto_drive() {
   sdev = calculateSD(distances);
 
   pwm_in = int(sdev * kp) + 50;
-
-  if  (statusSensorRight == 1 && statusSensorLeft == 0) {
+  motors_speed_individual(pwm_in,pwm_in);
+ /* if  (statusSensorRight == 1 && statusSensorLeft == 0) {
     //case: something is detected on the left
     Serial.println("left ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
+    Serial.print("pwm: ");
+    Serial.println(pwm_in);
+    motors_speed_individual(pwm_in,pwm_in/2);
   }
   else if (statusSensorRight == 0 && statusSensorLeft == 1) {
     //case: something is detected on the right
     Serial.println("right ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
+    Serial.print("pwn: ");
+    Serial.println(pwm_in);
+    motors_speed_individual(pwm_in/2,pwm_in);
   }
   else if (statusSensorRight == 1 && statusSensorLeft == 1) {
     //case: something is detected on both sides
     Serial.println("centre ");
-    Serial.print("standard deviation: ");
-    Serial.println(sdev);
+    Serial.print("pwn: ");
+    Serial.println(pwm_in);
+    motors_speed_individual(pwm_in,pwm_in);
   }
-  else {
+  else if (statusSensorRight == 0 && statusSensorLeft == 0){
     Serial.println("none");
+    Serial.print("pwm: ");
+    Serial.println(pwm_in);
   }
+  Serial.print("sense state: ");
+  Serial.print(statusSensorRight);
+  Serial.println(statusSensorLeft);
+  */
 }
+
 
 //----------FUNCTIONS----------
 
@@ -352,14 +385,15 @@ bool obstacle_front() { //if no obstacle, return false
 void avoid_obstacle() { //turn in place to avoid obstacle
   Serial.println("Avoiding obstacle");
 
-  motors_stop(); //stop movement
+//  motors_stop(); //stop movement
   //turn until safe
   int count = 0;
 
+  motors_set_forwards();
   motor_startup();
 
   while (obstacle_back() || obstacle_front()) {
-    if (count < 30) {
+    if (count < 8) {
       stationary_turn_right(90); //turn right with movement speed 30
       Serial.println("RIGHT TEST");
     }
@@ -406,10 +440,15 @@ void motors_stop() { //stop the motors
 void motors_set_forwards() { //switch motor direction to forward
   Serial.println("Motors set forwards");
 
-  digitalWrite(motor1_1, LOW);
-  digitalWrite(motor1_2, HIGH);
-  digitalWrite(motor2_1, LOW);
-  digitalWrite(motor2_2, HIGH);
+//  digitalWrite(motor1_1, LOW);
+//  digitalWrite(motor1_2, HIGH);
+//  digitalWrite(motor2_1, LOW);
+//  digitalWrite(motor2_2, HIGH);
+
+  digitalWrite(motor1_1, HIGH);
+  digitalWrite(motor1_2, LOW);
+  digitalWrite(motor2_1, HIGH);
+  digitalWrite(motor2_2, LOW);
 }
 
 void motors_speed_func(int motors_speed) { //input movement speed
@@ -460,46 +499,57 @@ void motors_speed_individual(int motor1_speed, int motor2_speed) { //input movem
 
 void stationary_turn_right(int motors_speed) { //turn right in place
   Serial.println("Stationary, turn right - " + motors_speed);
+  motor_startup();
+  motors_set_forwards();
+//
+//  //prevent value from exceed 255
+//  if (motors_speed > 255) {
+//    motors_speed = 255;
+//  }
+//  else if (motors_speed < 0) {
+//    motors_speed = 0;
+//  }
+//
+//  int motor1_speed = 0 - motors_speed;
+//  int motor2_speed = motors_speed;
+//
+//  check_direction(motor1_speed, motor2_speed);
+//  motor1_speed = abs(motor1_speed);
+//  motor2_speed = abs(motor2_speed);
+//  
+//  analogWrite(motor1_en, motor1_speed);
+//  analogWrite(motor2_en, motor2_speed);
 
-  //prevent value from exceed 255
-  if (motors_speed > 255) {
-    motors_speed = 255;
-  }
-  else if (motors_speed < 0) {
-    motors_speed = 0;
-  }
-
-  int motor1_speed = 0 - motors_speed;
-  int motor2_speed = motors_speed;
-
-  check_direction(motor1_speed, motor2_speed);
-  motor1_speed = abs(motor1_speed);
-  motor2_speed = abs(motor2_speed);
-  
-  analogWrite(motor1_en, motor1_speed);
-  analogWrite(motor2_en, motor2_speed);
+    analogWrite(motor1_en, 200);
+    analogWrite(motor2_en, 0);
 }
 
 void stationary_turn_left(int motors_speed) { //turn left in place
   Serial.println("Stationary, turn left - " + motors_speed);
+  motor_startup();
+  motors_set_forwards();
+//
+//  //prevent value from exceed 255
+//  if (motors_speed > 255) {
+//    motors_speed = 255;
+//  }
+//  else if (motors_speed < 0) {
+//    motors_speed = 0;
+//  }
+//
+//  int motor1_speed = motors_speed;
+//  int motor2_speed = 0 - motors_speed;
+//
+//  check_direction(motor1_speed, motor2_speed);
+//  motor1_speed = abs(motor1_speed);
+//  motor2_speed = abs(motor2_speed);
+//  
+//  analogWrite(motor1_en, motor1_speed);
+//  analogWrite(motor2_en, motor2_speed);
 
-  //prevent value from exceed 255
-  if (motors_speed > 255) {
-    motors_speed = 255;
-  }
-  else if (motors_speed < 0) {
-    motors_speed = 0;
-  }
 
-  int motor1_speed = motors_speed;
-  int motor2_speed = 0 - motors_speed;
-
-  check_direction(motor1_speed, motor2_speed);
-  motor1_speed = abs(motor1_speed);
-  motor2_speed = abs(motor2_speed);
-  
-  analogWrite(motor1_en, motor1_speed);
-  analogWrite(motor2_en, motor2_speed);
+    analogWrite(motor1_en, 0);
+    analogWrite(motor2_en, 200);
 }
 
 void check_direction(int motor1, int motor2) {
@@ -527,21 +577,21 @@ void check_direction(int motor1, int motor2) {
 
 float calculateSD(float data[])
 {
-  float sum = 0.0, mean, standardDeviation = 0.0;
+    float sum = 0.0, mean, standardDeviation = 0.0;
 
-  int i;
+    int i;
 
-  for (i = 0; i < 10; ++i)
-  {
-    sum += data[i];
-  }
+    for(i = 0; i < 10; ++i)
+    {
+        sum += data[i];
+    }
 
-  mean = sum / 10;
+    mean = sum/10;
 
-  for (i = 0; i < 10; ++i)
-    standardDeviation += pow(data[i] - mean, 2);
+    for(i = 0; i < 10; ++i)
+        standardDeviation += pow(data[i] - mean, 2);
 
-  return sqrt(standardDeviation / 10);
+    return sqrt(standardDeviation / 10);
 }
 
 void read_IR() {
